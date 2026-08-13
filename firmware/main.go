@@ -25,6 +25,7 @@ func main() {
 
 	PinDoor.Configure(machine.PinConfig{Mode: machine.PinInputPullup})
 
+	// background Goroutine: Door Monitor (MC-38 Sensor)
 	go func() {
 		lastDoorState := PinDoor.Get()
 
@@ -48,8 +49,21 @@ func main() {
 		}
 	}()
 
+	// temperature & humidity Monitor (BME280)
 	for {
-		rawTemp := 
+		rawTemp, err := sensorBME.ReadTemperature()
+		if err == nil {
+			tempCelsius := float64(rawTemp) / 1000.0
+			rawHumidity, _ := sensorBME.ReadHumidity()
+			humidity := float64(rawHumidity) / 100.0
+
+			fmt.Printf("🌡️ [TELEMETRY] Temp: %.2f °C | Humidity: %.2f %%\n", tempCelsius, humidity)
+			// TODO: publishMQTT("bedroom/temperature", tempCelsius)
+		} else {
+			fmt.Println("⚠️ [ERROR] Failed to read from BME280 sensor:", err)
+		}
+
+		time.Sleep(TempTelemetryIntervalMs * time.Millisecond)
 	}
 
 }

@@ -3,6 +3,7 @@ package main
 import "machine"
 
 const (
+	// I2C Pins for BME280 sensor
 	PinSDA = machine.GPIO21
 	PinSCL = machine.GPIO22
 
