@@ -8,20 +8,33 @@ import (
 
 var mqttClient mqtt.Client
 
-func PublishMessage(topic string, payload string, retain bool) {
+type MqttPublisher struct {
+	topic   string
+	payload string
+	retain  bool
+}
+
+func NewMqttPublisher(topic string, retain bool) *MqttPublisher {
+	return &MqttPublisher{
+		topic:  topic,
+		retain: retain,
+	}
+}
+
+func (p *MqttPublisher) PublishMessage(payload string) {
 	if mqttClient == nil || !mqttClient.IsConnected() {
 		fmt.Println("⚠️ [MQTT] Cannot publish: client is disconnected")
 		return
 	}
 
-	token := mqttClient.Publish(topic, 0, retain, payload)
+	token := mqttClient.Publish(p.topic, 0, p.retain, payload)
 
 	token.Wait()
 
 	if token.Error() != nil {
-		fmt.Printf("❌ [MQTT] Error publishing to %s: %v\n", topic, token.Error())
+		fmt.Printf("❌ [MQTT] Error publishing to %s: %v\n", p.topic, token.Error())
 	} else {
-		fmt.Printf("📡 [MQTT PUBLISH] Topic: %s | Payload: %s (Retain: %t)\n", topic, payload, retain)
+		fmt.Printf("📡 [MQTT PUBLISH] Topic: %s | Payload: %s (Retain: %t)\n", p.topic, payload, p.retain)
 	}
 
 }
