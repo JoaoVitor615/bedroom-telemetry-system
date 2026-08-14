@@ -13,6 +13,12 @@ func main() {
 	time.Sleep(2 * time.Second)
 	fmt.Println("🚀 Starting bedroom monitoring system...")
 
+	err := InitNetwork()
+	if err != nil {
+		fmt.Printf("❌ Network initialization failed: %v\n", err)
+		fmt.Println("⚠️ Running in offline mode (local serial logs only)...")
+	}
+
 	// configure I2C for BME280
 	machine.I2C0.Configure(machine.I2CConfig{
 		Frequency: machine.KHz * 400,
