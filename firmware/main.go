@@ -19,6 +19,11 @@ func main() {
 		fmt.Println("⚠️ Running in offline mode (local serial logs only)...")
 	}
 
+	// retain is FALSE for door events (historical state log)
+	doorPublisher := NewMqttPublisher(TopicDoorEvent, false)
+	// retain is TRUE for temperature (keeps last known state for immediate UI consumption)
+	tempPublisher := NewMqttPublisher(TopicTemperature, true)
+
 	// configure I2C for BME280
 	machine.I2C0.Configure(machine.I2CConfig{
 		Frequency: machine.KHz * 400,
@@ -44,10 +49,10 @@ func main() {
 
 				if currentDoorState {
 					fmt.Println("🚪 [EVENT] Door was OPENED")
-					// TODO: publishMQTT("bedroom/door/event", "OPENED")
+					doorPublisher.PublishMessage(`{"event":"OPENED"}`)
 				} else {
 					fmt.Println("🚪 [EVENT] Door was CLOSED")
-					// TODO: publishMQTT("bedroom/door/event", "CLOSED")
+					doorPublisher.PublishMessage(`{"event":"CLOSED"}`)
 				}
 			}
 
@@ -64,7 +69,8 @@ func main() {
 			humidity := float64(rawHumidity) / 100.0
 
 			fmt.Printf("🌡️ [TELEMETRY] Temp: %.2f °C | Humidity: %.2f %%\n", tempCelsius, humidity)
-			// TODO: publishMQTT("bedroom/temperature", tempCelsius)
+			payload := fmt.Sprintf(`{"temperature":%.2f,"humidity":%.2f}`, tempCelsius, humidity)
+			tempPublisher.PublishMessage(payload)
 		} else {
 			fmt.Println("⚠️ [ERROR] Failed to read from BME280 sensor:", err)
 		}
