@@ -11,7 +11,11 @@ const char* WIFI_PASS = "YOUR_WIFI_PASSWORD";
 // ==========================================
 const char* MQTT_BROKER    = "192.168.0.100"; // Replace with your Broker IP
 const int   MQTT_PORT      = 1883;
-const char* MQTT_CLIENT_ID = "bedroom-monitor-01";
+const char* MQTT_CLIENT_ID = "bedroom-esp32-node";
+
+// MQTT Topics
+const char* TOPIC_TEMPERATURE = "bedroom/temperature";
+const char* TOPIC_DOOR_EVENT  = "bedroom/door/event";
 
 // ==========================================
 // HARDWARE PINS

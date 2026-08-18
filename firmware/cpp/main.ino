@@ -83,10 +83,10 @@ void loop() {
         // If using PULLUP with the switch to GND: HIGH = Open, LOW = Closed.
         if (currentDoorState == HIGH) {
             Serial.println("🚪 [EVENT] Door was OPENED");
-            publishMQTT("bedroom/door/event", "OPENED");
+            publishMQTT(TOPIC_DOOR_EVENT, "OPENED");
         } else {
             Serial.println("🚪 [EVENT] Door was CLOSED");
-            publishMQTT("bedroom/door/event", "CLOSED");
+            publishMQTT(TOPIC_DOOR_EVENT, "CLOSED");
         }
         delay(DOOR_POLLING_INTERVAL_MS); // Simple debounce
     }
@@ -108,7 +108,7 @@ void loop() {
             dtostrf(tempCelsius, 4, 2, tempStr);
             dtostrf(humidity, 4, 2, humStr);
 
-            publishMQTT("bedroom/temperature", tempStr);
+            publishMQTT(TOPIC_TEMPERATURE, tempStr);
             publishMQTT("bedroom/humidity", humStr);
         } else {
             Serial.println("⚠️ [ERROR] Failed to read from BME280 sensor");
