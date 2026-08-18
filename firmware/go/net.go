@@ -31,8 +31,6 @@ func NewMqttPublisher(topic string, retain bool) *MqttPublisher {
 
 // publishMessage sends a payload to a target topic using the new Paho lib
 func (p *MqttPublisher) PublishMessage(payload string) {
-	// A nova biblioteca gerencia a conexão na camada de rede (net.Conn).
-	// Se a rede cair, o método Publish retornará um erro automaticamente.
 	if mqttClient == nil {
 		fmt.Println("⚠️ [MQTT] Cannot publish: client is nil")
 		return
@@ -45,7 +43,6 @@ func (p *MqttPublisher) PublishMessage(payload string) {
 		Retain:  p.retain,
 	}
 
-	// Envia a mensagem passando um context nativo do Go em vez do antigo "token.Wait()"
 	_, err := mqttClient.Publish(context.Background(), msg)
 
 	if err != nil {
@@ -78,26 +75,22 @@ func InitNetwork() error {
 	fmt.Println("✅ Wi-Fi Connected!")
 
 	// format target broker address (e.g., 192.168.1.100:1883)
-	// Nota: a nova lib usa o dialer padrão TCP, então não precisamos do prefixo "tcp://"
 	brokerAddress := fmt.Sprintf("%s:%d", MqttBroker, MqttPort)
 	fmt.Printf("🔌 Connecting TCP to %s...\n", brokerAddress)
 
-	// Abre a conexão TCP padrão usando a internet configurada pelo netdev
 	conn, err := net.Dial("tcp", brokerAddress)
 	if err != nil {
 		return fmt.Errorf("failed to open TCP connection: %w", err)
 	}
 
-	// instantiate new Paho client
 	mqttClient = paho.NewClient(paho.ClientConfig{
 		Conn: conn,
-		// Substitui o OnConnectionLost antigo
 		OnClientError: func(err error) {
 			fmt.Printf("⚠️ Connection lost to MQTT Broker: %v\n", err)
 		},
 	})
 
-	// Setup do pacote de conexão MQTT
+	// MQTT connection setup package
 	connectPacket := &paho.Connect{
 		ClientID:   MqttClientID,
 		CleanStart: true,
@@ -106,11 +99,9 @@ func InitNetwork() error {
 
 	fmt.Println("🔄 Authenticating MQTT...")
 
-	// Cria um contexto com timeout para a tentativa de conexão (substitui o token.Wait)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Envia o pacote de Connect e aguarda o Acknowledgement do Broker
 	connAck, err := mqttClient.Connect(ctx, connectPacket)
 	if err != nil {
 		return fmt.Errorf("failed to connect to MQTT broker: %w", err)
@@ -120,7 +111,6 @@ func InitNetwork() error {
 		return fmt.Errorf("broker rejected connection with reason code: %d", connAck.ReasonCode)
 	}
 
-	// Substitui o OnConnect antigo
 	fmt.Println("✅ Successfully connected to MQTT Broker!")
 
 	return nil
