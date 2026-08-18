@@ -1,1 +1,2 @@
-firmware/config.go
+firmware/cpp/config.h
+firmware/go/config.go
