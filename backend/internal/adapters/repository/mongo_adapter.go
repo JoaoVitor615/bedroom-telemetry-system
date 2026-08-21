@@ -3,9 +3,8 @@ package repository
 import (
 	"context"
 
-	"bedroom-api/internal/domain"
-	"bedroom-api/internal/domain/repository"
-
+	"github.com/JoaoVitor615/bedroom-telemetry-system/internal/domain"
+	"github.com/JoaoVitor615/bedroom-telemetry-system/internal/domain/repository"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
