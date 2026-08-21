@@ -4,6 +4,8 @@ go 1.25.1
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.1
+	github.com/go-chi/chi v1.5.5
+	github.com/go-chi/chi/v5 v5.3.2
 	go.mongodb.org/mongo-driver/v2 v2.8.0
 )
 
