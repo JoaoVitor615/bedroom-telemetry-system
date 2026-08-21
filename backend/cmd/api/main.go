@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	repoModels "github.com/JoaoVitor615/bedroom-telemetry-system/internal/domain/repository"
 
@@ -11,36 +12,53 @@ import (
 	"github.com/JoaoVitor615/bedroom-telemetry-system/internal/domain/service"
 	"github.com/JoaoVitor615/bedroom-telemetry-system/internal/mongodb"
 	"github.com/JoaoVitor615/bedroom-telemetry-system/internal/mqtt"
-	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	log.Println("🚀 Starting Bedroom API...")
 
-	// 1. Initialize Domain State
+	// 1. Load the variables in .env
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠️ Warning: .env file not found.")
+	}
+
+	// 2. Get credentials
+	mongoURI := os.Getenv("MONGO_URI")
+	dbName := os.Getenv("MONGO_DB_NAME")
+	mqttBroker := os.Getenv("MQTT_BROKER_URI")
+	apiPort := os.Getenv("PORT")
+
+	// Port fallback
+	if apiPort == "" {
+		apiPort = "8080"
+	}
+
+	// 3. Initialize Domain State
 	appState := &repoModels.CurrentState{}
 
-	// 2. Setup Infrastructure (MongoDB Connection)
-	mongoClient, err := mongodb.NewClient("mongodb://localhost:27017")
+	// 4. Setup Infrastructure (MongoDB Connection)
+	mongoClient, err := mongodb.NewClient(mongoURI)
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
-	db := mongoClient.Database("bedroom_db")
+	db := mongoClient.Database(dbName)
 
-	// 3. Initialize Adapters
+	// 5. Initialize Adapters
 	mongoAdapter := repository.NewMongoAdapter(db, "door_events")
 
-	// 4. Initialize Core Domain Services (Injecting Adapters and State)
+	// 6. Initialize Core Domain Services
 	bedroomService := service.NewBedroomService(mongoAdapter, appState)
 
-	// 5. Initialize Controllers and Consumers (Injecting Services)
+	// 7. Initialize Controllers and Consumers
 	httpController := controller.NewHTTPController(bedroomService)
 
-	mqttConsumer := mqtt.NewConsumer("tcp://192.168.1.75:1883", bedroomService)
+	mqttConsumer := mqtt.NewConsumer(mqttBroker, bedroomService)
 	mqttConsumer.StartListening()
 
-	// 6. Setup HTTP Router (Chi)
+	// 8. Setup HTTP Router (Chi)
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -52,9 +70,10 @@ func main() {
 		r.Get("/history", httpController.GetHistory)
 	})
 
-	// 7. Start Server
-	log.Println("🌐 HTTP Server running on port :8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	// 9. Start Server
+	serverAddress := ":" + apiPort
+	log.Printf("🌐 HTTP Server running on port %s\n", serverAddress)
+	if err := http.ListenAndServe(serverAddress, r); err != nil {
 		log.Fatal(err)
 	}
 }
