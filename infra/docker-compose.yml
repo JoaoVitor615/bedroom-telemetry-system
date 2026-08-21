@@ -26,10 +26,27 @@ services:
     ports:
       - "27017:27017" # Standard MongoDB port
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: secretpassword
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
     volumes:
       - mongo_data:/data/db
+
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: bedroom-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mosquitto
+      - mongodb
+    environment:
+      PORT: "8080"
+      MONGO_URI: "mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017"
+      MONGO_DB_NAME: ${MONGO_DB_NAME}
+      MQTT_BROKER_URI: "tcp://mosquitto:1883"
 
 volumes:
   mosquitto_data:
